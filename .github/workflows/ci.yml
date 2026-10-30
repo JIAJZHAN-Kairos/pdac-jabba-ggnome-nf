@@ -32,7 +32,7 @@ jobs:
           python3 - <<'PY'
           import json
           from pathlib import Path
-          paths=list(Path('test-results/samples').glob('*/execution_status.json'))
+          paths=list(Path('test-results/samples/result').glob('*/execution_status.json'))
           assert len(paths)==2
           assert all(json.load(open(p))['status']=='STUB_ONLY' and not json.load(open(p))['accepted'] for p in paths)
           PY
