@@ -1,0 +1,12 @@
+.nextflow*
+work/
+results/
+runtime_private/
+*.tar.gz
+*.sif
+*.pem
+.env*
+actual_samplesheet*.csv
+__pycache__/
+*.pyc
+provenance/runtime_verification/

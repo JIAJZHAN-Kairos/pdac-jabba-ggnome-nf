@@ -1,0 +1,37 @@
+name: Validate orchestration and strict QC gates
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: nf-core/setup-nextflow@v2
+        with:
+          version: '24.10.5'
+      - run: python3 -m unittest discover -s tests -v
+      - name: Verify immutable scientific sources
+        run: |
+          python3 - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          for name,h in json.load(open('provenance/gadi_script_sha256.json')).items():
+              assert hashlib.sha256((Path('assets/gadi_scripts')/name).read_bytes()).hexdigest()==h
+          PY
+      - name: Two-sample stub orchestration only
+        run: |
+          python3 tests/make_stub_samples.py /tmp/pdac-stub
+          nextflow run . -profile local -stub-run --input /tmp/pdac-stub/samplesheet.csv --outdir test-results --expected_samples 2 --wave_id ci-stub --container ubuntu:22.04 -ansi-log false
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          paths=list(Path('test-results/samples').glob('*/execution_status.json'))
+          assert len(paths)==2
+          assert all(json.load(open(p))['status']=='STUB_ONLY' and not json.load(open(p))['accepted'] for p in paths)
+          PY

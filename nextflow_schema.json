@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "PDAC JaBbA + gGnome",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "string",
+      "title": "Samplesheet",
+      "description": "Private CSV with original four inputs, bytes and SHA256 for each sample",
+      "format": "file-path"
+    },
+    "outdir": {
+      "type": "string",
+      "title": "Output directory",
+      "description": "Unique private S3 prefix; never reuse a previous run"
+    },
+    "container": {
+      "type": "string",
+      "title": "Pinned private container",
+      "description": "ECR image pinned by immutable sha256 digest"
+    },
+    "expected_samples": {
+      "type": "integer",
+      "title": "Expected sample count",
+      "minimum": 1
+    },
+    "wave_id": {
+      "type": "string",
+      "title": "Wave identity",
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    }
+  },
+  "required": [
+    "input",
+    "outdir",
+    "container",
+    "expected_samples",
+    "wave_id"
+  ]
+}

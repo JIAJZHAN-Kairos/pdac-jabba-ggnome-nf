@@ -1,0 +1,9 @@
+{
+  "base_OCI_digest": "mskilab/jabba@sha256:be8e391cf9e13c2870e4578fa80433315cad2f8c23dee5c55a1cdce660f54d47",
+  "runtime_bundle_sha256": "05ed71ba388429f46e37cfae6faee664105270feff0350f5bb04a6a760e6daff",
+  "R_runtime": "Original R4.0.5 and installed JaBbA/gGnome/gUtils libraries copied without modification",
+  "CPLEX_runtime": "Original CPLEX22.2 Linux x86-64 executable and library, private image only",
+  "Python_Gadi": "3.13.9",
+  "Python_portable": "3.12.8",
+  "Python_scope": "Input validation and CN consistency/plotting; numpy1.26.4,pandas2.2.2,matplotlib3.9.2 match Gadi. Model preparation and inference remain in original R runtime. Portability difference requires actual pilot QC."
+}
