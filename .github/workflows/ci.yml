@@ -27,7 +27,8 @@ jobs:
       - name: Two-sample stub orchestration only
         run: |
           python3 tests/make_stub_samples.py /tmp/pdac-stub
-          nextflow run . -profile local -stub-run --input /tmp/pdac-stub/samplesheet.csv --outdir test-results --expected_samples 2 --wave_id ci-stub --container ubuntu:22.04 -ansi-log false
+          printf "process { cpus = 1; memory = '512 MB' }\n" > /tmp/pdac-ci.config
+          nextflow run . -c /tmp/pdac-ci.config -profile local -stub-run --input /tmp/pdac-stub/samplesheet.csv --outdir test-results --expected_samples 2 --wave_id ci-stub --container ubuntu:22.04 -ansi-log false
           python3 - <<'PY'
           import json
           from pathlib import Path
