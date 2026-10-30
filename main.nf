@@ -7,6 +7,7 @@ process JABBA_SAMPLE {
     tuple val(meta), path(cobalt), path(sv), path(cnv), path(purity)
     path scripts
     path pins
+    path cplex_pins
     output:
     tuple val(meta.sample), path("result/${meta.sample}"), emit: results
     script:
@@ -15,7 +16,7 @@ process JABBA_SAMPLE {
     cat > sample.json <<'SAMPLE_METADATA'
     ${metadata}
     SAMPLE_METADATA
-    run_sample.py sample.json ${scripts} ${pins} result/${meta.sample} '${cobalt}' '${sv}' '${cnv}' '${purity}'
+    run_sample.py sample.json ${scripts} ${pins} ${cplex_pins} result/${meta.sample} '${cobalt}' '${sv}' '${cnv}' '${purity}'
     """
     stub:
     """
@@ -77,7 +78,7 @@ workflow {
             if (xs.collect { it[0].sample }.unique().size() != xs.size()) error 'Duplicate sample IDs'
             xs
         }
-    JABBA_SAMPLE(rows, file("${projectDir}/assets/gadi_scripts"), file("${projectDir}/provenance/gadi_script_sha256.json"))
+    JABBA_SAMPLE(rows, file("${projectDir}/assets/gadi_scripts"), file("${projectDir}/provenance/gadi_script_sha256.json"), file("${projectDir}/provenance/cplex_core_sha256.json"))
     result_dirs = JABBA_SAMPLE.out.results.map { sample, result -> result }.collect()
     REPORT_OUTCOMES(result_dirs)
     EXECUTION_STATUS_GATE(REPORT_OUTCOMES.out[0])

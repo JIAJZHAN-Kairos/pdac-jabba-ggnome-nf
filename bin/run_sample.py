@@ -21,6 +21,31 @@ def sha(path):
     return h.hexdigest()
 
 
+def verify_cplex(root, pins):
+    root = Path(root)
+    for relative in ['cplex/include', 'cplex/lib', 'cplex/bin/x86-64_linux']:
+        assert (root / relative).is_dir(), 'Incomplete CPLEX installation: ' + relative
+    for relative, expected in pins.items():
+        path = root / relative
+        assert path.is_file(), 'Missing CPLEX file: ' + relative
+        assert sha(path) == expected, 'CPLEX source hash mismatch: ' + relative
+    return {'CPLEX_DIR': str(root), 'verified_file_sha256': pins}
+
+
+def run_logged(command, log_path, cwd):
+    with Path(log_path).open('w') as handle:
+        process = subprocess.Popen(command, cwd=cwd, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT, text=True, bufsize=1)
+        for line in process.stdout:
+            handle.write(line)
+            handle.flush()
+            print(line, end='', flush=True)
+        process.stdout.close()
+        returncode = process.wait()
+    if returncode:
+        raise subprocess.CalledProcessError(returncode, command)
+
+
 def strict_numeric(out):
     with (out / 'optimization_report.tsv').open() as f:
         rows = list(csv.DictReader(f, delimiter='\t'))
@@ -47,7 +72,7 @@ def strict_numeric(out):
 
 
 def main():
-    meta_path, scripts_path, pins_path, root_path, *inputs = sys.argv[1:]
+    meta_path, scripts_path, pins_path, cplex_pins_path, root_path, *inputs = sys.argv[1:]
     meta = json.loads(Path(meta_path).read_text())
     scripts_path = Path(scripts_path).resolve()
     pins = json.loads(Path(pins_path).read_text())
@@ -59,6 +84,9 @@ def main():
              'AWS_BATCH_JOB_ID': os.environ.get('AWS_BATCH_JOB_ID'), 'resource_profile': '4CPU16GiB_CPLEX12GB',
              'review_required': ['original numerical QC', 'all target PNGs', 'actual coverage support', 'architecture limitations']}
     try:
+        state['stage'] = 'CPLEX_preflight'
+        assert os.environ.get('CPLEX_DIR'), 'CPLEX_DIR is required'
+        state['CPLEX_preflight'] = verify_cplex(os.environ['CPLEX_DIR'], json.loads(Path(cplex_pins_path).read_text()))
         for name, expected in pins.items():
             assert sha(scripts_path / name) == expected, 'Scientific source hash mismatch: ' + name
         shutil.copytree(scripts_path, root / 'scripts')
@@ -97,8 +125,8 @@ def main():
         for stage, command in stages:
             state['stage'] = stage
             (root / 'execution_status.json').write_text(json.dumps(state, indent=2) + '\n')
-            with (root / 'logs' / (sample + '.' + stage + '.log')).open('w') as f:
-                subprocess.run(command + [str(root), sample], cwd=root, stdout=f, stderr=subprocess.STDOUT, check=True)
+            print(json.dumps({'sample': sample, 'stage': stage, 'status': 'RUNNING'}), flush=True)
+            run_logged(command + [str(root), sample], root / 'logs' / (sample + '.' + stage + '.log'), root)
         state['stage'] = 'strict_numeric_gate'
         state['strict_numeric'] = strict_numeric(root / 'graphs' / sample)
         state['visual_artifact_sha256'] = {str(p.relative_to(root)): sha(p) for p in sorted((root / 'graphs' / sample).rglob('*.png'))}

@@ -2,7 +2,11 @@
   "base_OCI_digest": "mskilab/jabba@sha256:be8e391cf9e13c2870e4578fa80433315cad2f8c23dee5c55a1cdce660f54d47",
   "runtime_bundle_sha256": "05ed71ba388429f46e37cfae6faee664105270feff0350f5bb04a6a760e6daff",
   "R_runtime": "Original R4.0.5 and installed JaBbA/gGnome/gUtils libraries copied without modification",
-  "CPLEX_runtime": "Original CPLEX22.2 Linux x86-64 executable and library, private image only",
+  "CPLEX_runtime": "Original CPLEX22.2 Linux x86-64 bin, include and lib directories, private image only",
+  "CPLEX_include_lib_patch_sha256": "82ed4b5456110b356d667e1b9a0c8bdb1769fe6cd5e994df47da89d100ac6465",
+  "CPLEX_include_lib_patch_bytes": 12620047,
+  "CPLEX_patch_base_image_digest": "sha256:61cb367eb87023ab097e3fa987cb4fba78ebe9832aee8b2a47dd97e0080d8364",
+  "CPLEX_patch_scope": "Append only missing original include/lib files; original R/Python/executable layers and scientific scripts unchanged",
   "Python_Gadi": "3.13.9",
   "Python_portable": "3.12.8",
   "Python_scope": "Input validation and CN consistency/plotting; numpy1.26.4,pandas2.2.2,matplotlib3.9.2 match Gadi. Model preparation and inference remain in original R runtime. Portability difference requires actual pilot QC."

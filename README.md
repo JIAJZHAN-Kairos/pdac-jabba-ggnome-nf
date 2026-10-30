@@ -20,7 +20,9 @@ Use the user-selected Seqera AWS Batch compute environment. Without Fusion, AWS 
 
 ## Runtime
 
-The private image uses the exact Docker base digest from the original Gadi SIF and the unchanged installed R libraries/CPLEX runtime. The runtime bundle and proprietary binaries must stay outside Git and public container registries. `containers/Dockerfile` expects a hash-verified private `runtime_pinned.tar.gz` from the original deployment. CPLEX use remains subject to the existing entitlement. Record the immutable ECR image digest for every run.
+The private image uses the exact Docker base digest from the original Gadi SIF and the unchanged installed R libraries/CPLEX runtime. The runtime bundles and proprietary binaries must stay outside Git and public container registries. `containers/Dockerfile` expects the hash-verified private `runtime_pinned.tar.gz` plus `cplex_include_lib_original.tar.gz`, which together include the original CPLEX `bin`, `include`, and `lib` directories. Their SHA256 values are recorded in `provenance/runtime_build.json`. CPLEX use remains subject to the existing entitlement. Record the immutable ECR image digest for every run.
+
+The first migration image contained the CPLEX executable but omitted its headers and static libraries. JaBbA rejected that installation before optimization. Version 0.1.1 checks the required directories and original core-file SHA256 values before processing inputs; empty directories do not satisfy this check. Existing failed run outputs remain untouched. Stage logs are retained in the result and streamed to private AWS logs for diagnosis.
 
 ## Failure preservation and QC
 
