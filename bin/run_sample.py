@@ -73,6 +73,7 @@ def strict_numeric(out):
 
 def main():
     meta_path, scripts_path, pins_path, cplex_pins_path, root_path, *inputs = sys.argv[1:]
+    recovery_args, inputs = inputs[4:], inputs[:4]
     meta = json.loads(Path(meta_path).read_text())
     scripts_path = Path(scripts_path).resolve()
     pins = json.loads(Path(pins_path).read_text())
@@ -92,6 +93,16 @@ def main():
         shutil.copytree(scripts_path, root / 'scripts')
         for name in ['inputs','logs','prepared','graph_inputs','graphs']:
             (root / name).mkdir()
+        model_entrypoint = 'scripts/run_sample_16gb.R'
+        if recovery_args:
+            from recovery_support import prepare_recovery
+            assert len(recovery_args) == 2
+            state['stage'] = 'recovery_preflight'
+            spec, adapter = prepare_recovery(meta, root, *recovery_args)
+            state['recovery_spec'] = spec
+            state['resource_profile'] = spec['profile']
+            if spec['mode'] != 'FIRST_RUN':
+                model_entrypoint = str(adapter)
         suffixes = ['cobalt.ratio.tsv.gz','esvee.somatic.vcf.gz','purple.cnv.somatic.tsv','purple.purity.tsv']
         keys = ['cobalt','sv','cnv','purity']
         audit = []
@@ -118,7 +129,7 @@ def main():
             subprocess.run(['Rscript','--vanilla','-e','print(R.version.string); print(.libPaths()); library(JaBbA); library(gGnome); print(packageVersion("JaBbA")); print(packageVersion("gGnome"))'], stdout=f, stderr=subprocess.STDOUT, check=True)
         stages = [('input_QC', ['python3','scripts/check_inputs.py']),
                   ('input', ['Rscript','--vanilla','scripts/build_graph_inputs.R']),
-                  ('model', ['Rscript','--vanilla','scripts/run_sample_16gb.R']),
+                  ('model', ['Rscript','--vanilla',model_entrypoint]),
                   ('postfit', ['Rscript','--vanilla','scripts/finish_sample.R']),
                   ('CN_review', ['python3','scripts/review_cn.py']),
                   ('native_plot', ['Rscript','--vanilla','scripts/plot_native.R'])]

@@ -36,3 +36,15 @@ jobs:
           assert len(paths)==2
           assert all(json.load(open(p))['status']=='STUB_ONLY' and not json.load(open(p))['accepted'] for p in paths)
           PY
+      - name: Mixed recovery profiles stub orchestration only
+        run: |
+          python3 tests/make_recovery_stub_samples.py /tmp/pdac-recovery-stub
+          printf "process { withName: /RECOVERY76:.*/ { cpus = 1; memory = '512 MB'; time = '5m' } }\n" > /tmp/pdac-recovery-ci.config
+          nextflow run . -c /tmp/pdac-recovery-ci.config -profile local -stub-run --recovery true --input /tmp/pdac-recovery-stub/samplesheet.csv --outdir recovery-test-results --expected_samples 3 --wave_id ci-recovery-stub --container ubuntu:22.04 -ansi-log false
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          rows=[json.load(open(p)) for p in Path('recovery-test-results/samples/result').glob('*/execution_status.json')]
+          assert len(rows)==3 and {r['profile'] for r in rows}=={'standard','recovery','hard'}
+          assert all(r['status']=='STUB_ONLY' and not r['accepted'] for r in rows)
+          PY

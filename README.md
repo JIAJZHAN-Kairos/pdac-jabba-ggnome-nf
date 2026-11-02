@@ -40,4 +40,14 @@ A samplesheet is not a reservation. Before any cloud submission, reconcile actua
 
 `provenance/gadi_script_sha256.json` is checked before execution. The Gadi originals and its accepted graphs are never modified by this repository. Stub runs test orchestration only and write STUB_ONLY with accepted=false.
 
+## Explicit recovery wave
+
+Version 0.2.0 adds `--recovery true` for a new, separately owned samplesheet. It adds `recovery_profile`, `recovery_spec` and `recovery_spec_sha256` columns to the original input contract. A private per-sample JSON spec binds all four original input hashes, mode, resource profile, adapter hash and any original checkpoint hashes. Existing completed samples must not enter this manifest.
+
+The `standard` profile remains 4 CPU/16 GiB/8 h with CPLEX 12 GB/tilim 6000. The `recovery` profile uses 12 CPU/64 GiB/48 h with CPLEX 48 GB/tilim 21600, and `hard` uses 24 CPU/96 GiB/48 h with CPLEX 72 GB/tilim 43200. Normal recovery and hard recovery have concurrency caps of three and two; the global executor queue size remains 20. Select an existing On-Demand queue for long recovery processes in the launch configuration; do not change a shared compute environment or its other jobs.
+
+`NATIVE_WARMSTART` requires the complete original `jabba.raw.rds`, `karyograph.rds`, `edge.nudge.rds`, `ab.force.rds` and `ab.exclude.rds`, verified against their original input identity and SHA256. It uses the same native `ramip_stub` then `JaBbA(overwrite=FALSE)` method as the existing Gadi recovery. A preprocessing mipstart or component solution is never a substitute. `LONG_FRESH` starts an independent native fit when no complete checkpoint exists. No graph splicing, changed purity/ploidy, relaxed gap/status, or altered event classifier is used.
+
+Recovery infrastructure failures do not cancel unrelated samples. The cohort report explicitly lists any sample with no published worker record as requiring scheduler review. The final gate still fails when any requested sample lacks complete output; successful execution remains separate from manual numerical/image/coverage acceptance.
+
 The portable Python QC environment uses Python 3.12.8 rather than the Gadi controller Python 3.13.9. NumPy 1.26.4, pandas 2.2.2 and matplotlib 3.9.2 match the observed Gadi versions. R model preparation and inference use the unchanged original R4.0.5 stack. This portability difference is recorded in provenance/runtime_build.json and requires actual migration-pilot validation.

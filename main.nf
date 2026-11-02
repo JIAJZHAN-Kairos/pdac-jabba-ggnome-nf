@@ -1,4 +1,5 @@
 nextflow.enable.dsl=2
+include { RECOVERY76 } from './workflows/recovery'
 
 process JABBA_SAMPLE {
     tag { meta.sample }
@@ -63,6 +64,9 @@ workflow {
     if (!params.input || !params.outdir || !params.container || !params.expected_samples || !params.wave_id)
         error 'Required: --input --outdir --container --expected_samples --wave_id'
     if (!(params.wave_id ==~ /[A-Za-z0-9_.-]+/)) error 'Invalid wave_id'
+    if (params.recovery) {
+        RECOVERY76()
+    } else {
     rows = Channel.fromPath(params.input, checkIfExists:true).splitCsv(header:true)
         .map { row ->
             ['sample','cohort','cobalt_ratio','sv_vcf','purple_cnv','purple_purity','cobalt_sha256','sv_sha256','cnv_sha256','purity_sha256','cobalt_bytes','sv_bytes','cnv_bytes','purity_bytes'].each { k -> if (!row[k]) error "Missing ${k}" }
@@ -82,4 +86,5 @@ workflow {
     result_dirs = JABBA_SAMPLE.out.results.map { sample, result -> result }.collect()
     REPORT_OUTCOMES(result_dirs)
     EXECUTION_STATUS_GATE(REPORT_OUTCOMES.out[0])
+    }
 }

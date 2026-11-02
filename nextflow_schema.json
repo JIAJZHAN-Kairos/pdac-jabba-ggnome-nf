@@ -3,6 +3,11 @@
   "title": "PDAC JaBbA + gGnome",
   "type": "object",
   "properties": {
+    "recovery": {
+      "type": "boolean",
+      "default": false,
+      "description": "Use explicit per-sample recovery specs; preserve all failed/missing records"
+    },
     "input": {
       "type": "string",
       "title": "Samplesheet",
